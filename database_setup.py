@@ -15,7 +15,3 @@ player_df.to_sql('player', conn, if_exists='replace', index=False)
 team_df.to_sql('team', conn, if_exists='replace', index=False)
 
 conn.close()
-
-
-
-
