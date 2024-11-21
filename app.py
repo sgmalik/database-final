@@ -1,4 +1,5 @@
 import sqlite3
+import pandas as pd
 from flask import Flask, request, jsonify
 
 # Initialize Flask app
@@ -46,11 +47,13 @@ def query():
         elif stat == 'mean':
             query = f"SELECT AVG({column}) FROM {table}"
         elif stat == 'median':
-            query = f"SELECT MEDIAN({column}) FROM {table}"
+            df = pd.read_sql_query(f"SELECT {column} FROM {table}", conn)
+            median = df[column].median()
+            return f"The median of {column} is {median}"
         elif stat == 'stddev':
             query = f"SELECT STDDEV({column}) FROM {table}"
 
-        # If there is a query, execute it and print the result to the page
+        # If there is a query, (excluding median) execute it and print the result to the page
         if query:
             cursor.execute(query)
             result = cursor.fetchone()
@@ -78,6 +81,7 @@ def render_form(selected_table=None):
     # Return form with table selected and column dropdown populated
     return f'''
         <form method="POST">
+            <!-- Table dropdown -->
             <label for="table">Select Table:</label>
             <select name="table" id="table" onchange="this.form.submit()">
                 <option value="">Select a table...</option>
@@ -86,12 +90,15 @@ def render_form(selected_table=None):
                 <option value="team" {"selected" if selected_table == "team" else ""}>Team</option>
             </select>
             <br><br>
+            <!-- Column dropdown --> 
             <label for="column">Select Column:</label>
             <select name="column" id="column">
                 <option value="">Select a column...</option>
+                <!-- Using the columns list above that is made once the table is selected to populate the column dropdown -->
                 {" ".join(f'<option value="{col}">{col}</option>' for col in columns)}
             </select>
             <br><br>
+            <!-- Stat dropdown -->
             <label for="stat">Select Statistic:</label>
             <select name="stat" id="stat">
                 <option value="">Select a statistic...</option>
@@ -102,6 +109,7 @@ def render_form(selected_table=None):
                 <option value="stddev">Standard Deviation</option>
             </select>
             <br><br>
+            <!-- Once submitted, the form will follow the POST route and execute the query -->
             <input type="submit" value="Calculate">
         </form>
     '''
