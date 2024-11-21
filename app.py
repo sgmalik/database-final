@@ -18,6 +18,7 @@ def home():
     return '''
     <h1>Welcome to the Basketball Database App!</h1>
     <a href="/query">Go to Query Page</a>
+    <a href="/edit_data">Go to Edit Data Page</a>
 '''
 
 # Route to the query page
@@ -113,7 +114,9 @@ def render_form(selected_table=None):
             <input type="submit" value="Calculate">
         </form>
     '''
-
+@app.route('/edit_data', methods=['GET', 'POST'])
+def edit_data():
+    return "Edit data page"
         
 
 
