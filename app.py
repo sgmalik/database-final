@@ -1,3 +1,6 @@
+#River Bumpas & Surya Malik
+#CS 2500 Final Project
+
 import sqlite3
 import pandas as pd
 from flask import Flask, request, jsonify
@@ -117,15 +120,17 @@ def render_query_form(selected_table=None):
        '''
 @app.route('/edit_data', methods=['GET', 'POST'])
 def edit_data():
+    # Grabbing selected values from the form
     selected_table = request.form.get('table')
     action = request.form.get('action')
 
+    # If the form has been submitted, go here
     if request.method == 'POST':
+        # Checking if user has selected a table and an action
         if not selected_table or not action:
-            # If either selection is missing, prompt the user again
             return render_edit_form(selected_table=selected_table, action=action) + "<p>Please select both a table and an action.</p>"
         
-        # Handle the selected action (add, remove, modify)
+        # TODO: Add logic to handle the selected action (add, remove, modify)
         return f"Action '{action}' selected for table '{selected_table}'."
 
     return render_edit_form()
@@ -134,7 +139,7 @@ def edit_data():
 def render_edit_form(selected_table=None, action=None):
     return f'''
     <form method="POST">
-        <!-- Table dropdown to select which table to edit -->
+        <!-- Table dropdown -->
         <label for="table">Select Table:</label>
         <select name="table" id="table">
             <option value="">Select a table...</option>
@@ -143,7 +148,7 @@ def render_edit_form(selected_table=None, action=None):
             <option value="team" {"selected" if selected_table == "team" else ""}>Team</option>
         </select>
         
-        <!-- Action dropdown to select what action to perform -->
+        <!-- Action dropdown -->
         <label for="action">Select Action:</label>
         <select name="action" id="action">
             <option value="">Select an action...</option>
