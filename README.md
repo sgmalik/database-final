@@ -4,7 +4,8 @@ https://www.kaggle.com/datasets/wyattowalsh/basketball
 
 # TODO
 - add funcitonality to allow user to add, modify, and delete data from all tables
-- add functionality to allow user to query min, max, mean, median, standard deviation mean of a given column
+- ~~add functionality to allow user to query min, max, mean, median, standard deviation mean of a given column~~
+- add code to ensure that the user's queries do not cause code to error
 - add two queries using joins 
 - add visuals
 
