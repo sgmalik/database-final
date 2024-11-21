@@ -32,7 +32,7 @@ def query():
 
         if not column or not stat:
             # If column or stat is not selected, show the form again
-            return render_form(table)
+            return render_query_form(table)
 
 
         conn = connect_db()
@@ -65,9 +65,9 @@ def query():
             return "Invalid statistic selected."
 
     # Initial GET request or if no table is selected
-    return render_form()
+    return render_query_form()
 
-def render_form(selected_table=None):
+def render_query_form(selected_table=None):
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -113,11 +113,49 @@ def render_form(selected_table=None):
             <!-- Once submitted, the form will follow the POST route and execute the query -->
             <input type="submit" value="Calculate">
         </form>
-    '''
+ 
+       '''
 @app.route('/edit_data', methods=['GET', 'POST'])
 def edit_data():
-    return "Edit data page"
+    selected_table = request.form.get('table')
+    action = request.form.get('action')
+
+    if request.method == 'POST':
+        if not selected_table or not action:
+            # If either selection is missing, prompt the user again
+            return render_edit_form(selected_table=selected_table, action=action) + "<p>Please select both a table and an action.</p>"
         
+        # Handle the selected action (add, remove, modify)
+        return f"Action '{action}' selected for table '{selected_table}'."
+
+    return render_edit_form()
+    
+
+def render_edit_form(selected_table=None, action=None):
+    return f'''
+    <form method="POST">
+        <!-- Table dropdown to select which table to edit -->
+        <label for="table">Select Table:</label>
+        <select name="table" id="table">
+            <option value="">Select a table...</option>
+            <option value="game" {"selected" if selected_table == "game" else ""}>Game</option>
+            <option value="player" {"selected" if selected_table == "player" else ""}>Player</option>
+            <option value="team" {"selected" if selected_table == "team" else ""}>Team</option>
+        </select>
+        
+        <!-- Action dropdown to select what action to perform -->
+        <label for="action">Select Action:</label>
+        <select name="action" id="action">
+            <option value="">Select an action...</option>
+            <option value="add" {"selected" if action == "add" else ""}>Add Record</option>
+            <option value="remove" {"selected" if action == "remove" else ""}>Remove Record</option>
+            <option value="modify" {"selected" if action == "modify" else ""}>Modify Record</option>
+        </select>
+        
+        <button type="submit">Submit</button>
+    </form>
+    '''
+
 
 
 if __name__ == '__main__':
