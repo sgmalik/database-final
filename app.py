@@ -22,6 +22,7 @@ def home():
     <h1>Welcome to the Basketball Database App!</h1>
     <a href="/query">Go to Query Page</a>
     <a href="/edit_data">Go to Edit Data Page</a>
+    <a href="/graph">Go to Graph Page</a>
 '''
 
 # Route to the query page
@@ -161,7 +162,11 @@ def render_edit_form(selected_table=None, action=None):
     </form>
     '''
 
-
+@app.route('/graph')
+def graph():
+    return '''
+    <h1>Graph Page</h1>
+    '''
 
 if __name__ == '__main__':
     app.run(debug=True)
