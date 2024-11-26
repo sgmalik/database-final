@@ -3,7 +3,13 @@
 
 import sqlite3
 import pandas as pd
-from flask import Flask, request, jsonify
+import matplotlib.pyplot as plt
+from flask import Flask, request, jsonify, render_template, make_response
+import base64
+import io
+
+
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -164,9 +170,65 @@ def render_edit_form(selected_table=None, action=None):
 
 @app.route('/graph')
 def graph():
-    return '''
-    <h1>Graph Page</h1>
+    team_name = 'Los Angeles Lakers'
+    teams = get_teams()
+    wins = get_team_wins(team_name)
+
+    # Ensure the data is in the correct format
+    df = pd.DataFrame(wins, columns=['Year', 'Wins'])
+
+    # Check if the DataFrame is created correctly
+    print(df.head())
+
+    # Create a simple line plot using Matplotlib
+    plt.figure(figsize=(10, 5))
+    plt.plot(df['Yest'], df['Wins'], marker='o')
+    plt.xlabel('Year')
+    plt.ylabel('Wins')
+    plt.title(f'{team_name} Wins Over the Years')
+
+    # Convert the graph to a base64 encoded string
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plt.close()
+
+    # Return the image as a response with a type of image/png
+    return make_response(img.read()), 200, {'Content-Type': 'image/png'}
+
+
+def get_teams():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT full_name FROM team")
+    teams = cursor.fetchall()
+    return [team[0] for team in teams]
+    conn.close()
+
+def get_team_wins(team_name):
+    conn = connect_db()
+    cursor = conn.cursor()
+    query = '''
+    SELECT year, SUM(wins) as total_wins
+    FROM (
+        SELECT strftime('%Y', game_date) as year, COUNT(*) as wins
+        FROM game
+        WHERE team_name_home = ? AND wl_home = 'W'
+        GROUP BY year
+        UNION ALL
+        SELECT strftime('%Y', game_date) as year, COUNT(*) as wins
+        FROM game
+        WHERE team_name_away = ? AND wl_home = 'L'
+        GROUP BY year
+    )
+    GROUP BY year
+    ORDER BY year
     '''
+    cursor.execute(query, (team_name, team_name))
+    result = cursor.fetchall()
+    conn.close()
+    return result
+
 
 if __name__ == '__main__':
     app.run(debug=True)
