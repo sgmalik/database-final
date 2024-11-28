@@ -25,11 +25,23 @@ def connect_db():
 @app.route('/')
 def home():
     return '''
-    <h1>Welcome to the Basketball Database App!</h1>
-    <a href="/query">Go to Query Page</a>
-    <a href="/edit_data">Go to Edit Data Page</a>
-    <a href="/graph">Go to Graph Page</a>
-'''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+        <div class="container mx-auto text-center py-10">
+            <h1 class="text-4xl font-bold text-gray-800 mb-6">Welcome to the Basketball Database App!</h1>
+            <div class="flex justify-center space-x-4">
+                <a href="/query" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700">Query Page</a>
+                <a href="/edit_data" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700">Edit Data Page</a>
+                <a href="/graph" class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-700">Graph Page</a>
+            </div>
+        </div>
+    </body>
+    </html>
+    '''
 
 # Route to the query page
 @app.route('/query', methods=['GET', 'POST'])
@@ -91,40 +103,46 @@ def render_query_form(selected_table=None):
 
     # Return form with table selected and column dropdown populated
     return f'''
-        <form method="POST">
-            <!-- Table dropdown -->
-            <label for="table">Select Table:</label>
-            <select name="table" id="table" onchange="this.form.submit()">
-                <option value="">Select a table...</option>
-                <option value="game" {"selected" if selected_table == "game" else ""}>Game</option>
-                <option value="player" {"selected" if selected_table == "player" else ""}>Player</option>
-                <option value="team" {"selected" if selected_table == "team" else ""}>Team</option>
-            </select>
-            <br><br>
-            <!-- Column dropdown --> 
-            <label for="column">Select Column:</label>
-            <select name="column" id="column">
-                <option value="">Select a column...</option>
-                <!-- Using the columns list above that is made once the table is selected to populate the column dropdown -->
-                {" ".join(f'<option value="{col}">{col}</option>' for col in columns)}
-            </select>
-            <br><br>
-            <!-- Stat dropdown -->
-            <label for="stat">Select Statistic:</label>
-            <select name="stat" id="stat">
-                <option value="">Select a statistic...</option>
-                <option value="min">Minimum</option>
-                <option value="max">Maximum</option>
-                <option value="mean">Mean</option>
-                <option value="median">Median</option>
-                <option value="stddev">Standard Deviation</option>
-            </select>
-            <br><br>
-            <!-- Once submitted, the form will follow the POST route and execute the query -->
-            <input type="submit" value="Calculate">
-        </form>
- 
-       '''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+        <div class="container mx-auto py-10">
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">Query the Database</h1>
+            <form method="POST" class="bg-white p-6 rounded-lg shadow-md">
+                <label for="table" class="block text-gray-700 font-medium mb-2">Select Table:</label>
+                <select name="table" id="table" onchange="this.form.submit()" class="block w-full p-2 border rounded mb-4">
+                    <option value="">Select a table...</option>
+                    <option value="game" {"selected" if selected_table == "game" else ""}>Game</option>
+                    <option value="player" {"selected" if selected_table == "player" else ""}>Player</option>
+                    <option value="team" {"selected" if selected_table == "team" else ""}>Team</option>
+                </select>
+                
+                <label for="column" class="block text-gray-700 font-medium mb-2">Select Column:</label>
+                <select name="column" id="column" class="block w-full p-2 border rounded mb-4">
+                    <option value="">Select a column...</option>
+                    {" ".join(f'<option value="{col}">{col}</option>' for col in columns)}
+                </select>
+                
+                <label for="stat" class="block text-gray-700 font-medium mb-2">Select Statistic:</label>
+                <select name="stat" id="stat" class="block w-full p-2 border rounded mb-4">
+                    <option value="">Select a statistic...</option>
+                    <option value="min">Minimum</option>
+                    <option value="max">Maximum</option>
+                    <option value="mean">Mean</option>
+                    <option value="median">Median</option>
+                    <option value="stddev">Standard Deviation</option>
+                </select>
+                
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">Calculate</button>
+            </form>
+        </div>
+    </body>
+    </html>
+    '''
+
 @app.route('/edit_data', methods=['GET', 'POST'])
 def edit_data():
     # Grabbing selected values from the form
@@ -145,31 +163,41 @@ def edit_data():
 
 def render_edit_form(selected_table=None, action=None):
     return f'''
-    <form method="POST">
-        <!-- Table dropdown -->
-        <label for="table">Select Table:</label>
-        <select name="table" id="table">
-            <option value="">Select a table...</option>
-            <option value="game" {"selected" if selected_table == "game" else ""}>Game</option>
-            <option value="player" {"selected" if selected_table == "player" else ""}>Player</option>
-            <option value="team" {"selected" if selected_table == "team" else ""}>Team</option>
-        </select>
-        
-        <!-- Action dropdown -->
-        <label for="action">Select Action:</label>
-        <select name="action" id="action">
-            <option value="">Select an action...</option>
-            <option value="add" {"selected" if action == "add" else ""}>Add Record</option>
-            <option value="remove" {"selected" if action == "remove" else ""}>Remove Record</option>
-            <option value="modify" {"selected" if action == "modify" else ""}>Modify Record</option>
-        </select>
-        
-        <button type="submit">Submit</button>
-    </form>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+        <div class="container mx-auto py-10">
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">Edit Data</h1>
+            <form method="POST" class="bg-white p-6 rounded-lg shadow-md">
+                <label for="table" class="block text-gray-700 font-medium mb-2">Select Table:</label>
+                <select name="table" id="table" class="block w-full p-2 border rounded mb-4">
+                    <option value="">Select a table...</option>
+                    <option value="game" {"selected" if selected_table == "game" else ""}>Game</option>
+                    <option value="player" {"selected" if selected_table == "player" else ""}>Player</option>
+                    <option value="team" {"selected" if selected_table == "team" else ""}>Team</option>
+                </select>
+                
+                <label for="action" class="block text-gray-700 font-medium mb-2">Select Action:</label>
+                <select name="action" id="action" class="block w-full p-2 border rounded mb-4">
+                    <option value="">Select an action...</option>
+                    <option value="add" {"selected" if action == "add" else ""}>Add Record</option>
+                    <option value="remove" {"selected" if action == "remove" else ""}>Remove Record</option>
+                    <option value="modify" {"selected" if action == "modify" else ""}>Modify Record</option>
+                </select>
+                
+                <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700">Submit</button>
+            </form>
+        </div>
+    </body>
+    </html>
     '''
 
 @app.route('/graph')
-def graph():
+def graph(): 
+    plt.switch_backend('Agg') # ensures that the graph is not displayed in the browser and is saved as an image
     team_name = 'Los Angeles Lakers'
     teams = get_teams()
     wins = get_team_wins(team_name)
@@ -182,7 +210,7 @@ def graph():
 
     # Create a simple line plot using Matplotlib
     plt.figure(figsize=(10, 5))
-    plt.plot(df['Yest'], df['Wins'], marker='o')
+    plt.plot(df['Year'], df['Wins'], marker='o')
     plt.xlabel('Year')
     plt.ylabel('Wins')
     plt.title(f'{team_name} Wins Over the Years')
