@@ -162,42 +162,75 @@ def render_query_form(selected_table=None, result=None):
 
 @app.route('/edit_data', methods=['GET', 'POST'])
 def edit_data():
-    selected_table = request.form.get('table')
-    action = request.form.get('action')
-    result_message = None
-    initial_records = None
-    updated_records = None
+    # Variables to store selected table and action
+    selected_table = request.args.get('table') or request.form.get('table')
+    action = request.args.get('action') or request.form.get('action')
+    # request.args.get() is used to get the value of a query parameter in the URL of a GET request, while request.form.get() is used to get the value of a form field in a POST request.
 
-    if request.method == 'POST':
+    # we use GET requests to handle our actions (ie. which table and what action we want to preform), and POST requests to handle the form submissions
+    
+    # Initialize result variables
+    result_message = None
+    # initial_record = None  # Single record for Modify
+    # updated_record = None
+    columns = []
+
+    if selected_table:
         conn = connect_db()
         cursor = conn.cursor()
 
-        if selected_table and action:
-            cursor.execute(f"SELECT * FROM {selected_table}")
-            initial_records = cursor.fetchall()
+        # Fetch column names for the selected table
+        cursor.execute(f"PRAGMA table_info({selected_table})")
+        columns = [column[1] for column in cursor.fetchall()]  # Fetch column names
 
-            if action == 'add':
-                # Add logic: Insert a new record (placeholder values for now)
-                cursor.execute(f"INSERT INTO {selected_table} VALUES (?, ?, ?)", ('Sample1', 'Sample2', 'Sample3'))
-                result_message = f"Record added to {selected_table}."
-            elif action == 'remove':
-                # Remove logic: Delete the first record
-                cursor.execute(f"DELETE FROM {selected_table} WHERE rowid = (SELECT MIN(rowid) FROM {selected_table})")
-                result_message = f"Record removed from {selected_table}."
-            elif action == 'modify':
-                # Modify logic: Update the first record (placeholder update)
-                cursor.execute(f"UPDATE {selected_table} SET column1 = ? WHERE rowid = (SELECT MIN(rowid) FROM {selected_table})", ('UpdatedValue',))
-                result_message = f"Record modified in {selected_table}."
+        if action == 'modify' and request.method == 'POST':
+            # Fetch the primary key value
+            record_id = request.form.get('recordIDModify')
 
+            # # Fetch initial state of the record
+            # cursor.execute(f"SELECT * FROM {selected_table} WHERE id = ?", (record_id,))
+            # initial_record = cursor.fetchone()
+
+            # Prepare SQL for updating the record
+            updates = ', '.join([f"{col} = ?" for col in columns])
+            values = [request.form.get(f'modify_{col}') for col in columns]
+            values.append(record_id)
+
+            # Execute the update
+            cursor.execute(f"UPDATE {selected_table} SET {updates} WHERE id = ?", values)
+            # need to fix here as well, not every table has id column, need to somehow figure out which column is primary key and save that column name to insert here
             conn.commit()
-            cursor.execute(f"SELECT * FROM {selected_table}")
-            updated_records = cursor.fetchall()
-            conn.close()
 
-    return render_edit_form(selected_table, action, result_message, initial_records, updated_records)
-    
+            # # Fetch updated state of the record
+            # cursor.execute(f"SELECT * FROM {selected_table} WHERE id = ?", (record_id,))
+            # updated_record = cursor.fetchone()
 
-def render_edit_form(selected_table=None, action=None, message=None, initial_records=None, updated_records=None):
+            result_message = f"Record {record_id} modified in {selected_table}."
+        conn.close()
+
+    return render_edit_form(selected_table, action, result_message)
+
+def render_edit_form(selected_table=None, action=None, message=None, initial_record=None, updated_record=None):
+    columns = []
+    pk_column = None
+    pk_vals = []
+
+    if selected_table:
+        conn = connect_db()
+        cursor = conn.cursor()
+
+        # Fetch column names
+        cursor.execute(f"PRAGMA table_info({selected_table})")
+        columns = [column[1] for column in cursor.fetchall()]
+
+        # Fetch primary key values
+        pk_column = columns[0]  # Assuming the first column is the primary key
+        if pk_column:
+            cursor.execute(f"SELECT {pk_column} FROM {selected_table}")
+            pk_vals = [val[0] for val in cursor.fetchall()]
+        conn.close()
+
+    # Render form
     return f'''
     <!DOCTYPE html>
     <html lang="en">
@@ -208,7 +241,9 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
         {navbar()}
         <div class="container mx-auto py-10">
             <h1 class="text-2xl font-bold text-gray-800 mb-4">Edit Data</h1>
-            <form method="POST" class="bg-white p-6 rounded-lg shadow-md">
+            
+            <!-- Table and Action Selection -->
+            <form method="GET" class="bg-white p-6 rounded-lg shadow-md">
                 <label for="table" class="block text-gray-700 font-medium mb-2">Select Table:</label>
                 <select name="table" id="table" class="block w-full p-2 border rounded mb-4">
                     <option value="">Select a table...</option>
@@ -216,26 +251,54 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
                     <option value="player" {"selected" if selected_table == "player" else ""}>Player</option>
                     <option value="team" {"selected" if selected_table == "team" else ""}>Team</option>
                 </select>
-                
-                <label for="action" class="block text-gray-700 font-medium mb-2">Select Action:</label>
-                <select name="action" id="action" class="block w-full p-2 border rounded mb-4">
-                    <option value="">Select an action...</option>
-                    <option value="add" {"selected" if action == "add" else ""}>Add Record</option>
-                    <option value="remove" {"selected" if action == "remove" else ""}>Remove Record</option>
-                    <option value="modify" {"selected" if action == "modify" else ""}>Modify Record</option>
-                </select>
-                
-                <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700">Submit</button>
+
+                <div class="flex space-x-4">
+                    <button type="submit" name="action" value="add" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700">Add</button>
+                    <button type="submit" name="action" value="modify" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">Modify</button>
+                    <button type="submit" name="action" value="remove" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700">Remove</button>
+                </div>
             </form>
+
+            <!-- Render fields dynamically based on the action -->
+            <form method="POST" class="mt-6">
+                {'<h2 class="text-lg font-bold text-gray-700 mb-4">Add New Record</h2>' +
+                 ''.join(f'<label for="add_{col}" class="block text-gray-700 font-medium mb-2">{col}:</label><input type="text" name="add_{col}" class="block w-full p-2 border rounded mb-4">' for col in columns)
+                 if action == 'add' else ''}
+
+                {'<h2 class="text-lg font-bold text-gray-700 mb-4">Modify Record</h2>' +
+                 f'<p class="text-gray-700 font-medium mb-2">Select a record to modify:</p><select name="recordIDModify" class="block w-full p-2 border rounded mb-4">' +
+                 ''.join(f'<option value="{pk}">{pk}</option>' for pk in pk_vals) +
+                 '</select>' +
+                 ''.join(f'<label for="modify_{col}" class="block text-gray-700 font-medium mb-2">{col}:</label><input type="text" name="modify_{col}" class="block w-full p-2 border rounded mb-4">' for col in columns)
+                 if action == 'modify' else ''}
+
+                {'<h2 class="text-lg font-bold text-gray-700 mb-4">Remove Record</h2>' +
+                 f'<p class="text-gray-700 font-medium mb-2">Select a record to remove:</p><select name="recordID" class="block w-full p-2 border rounded mb-4">' +
+                 ''.join(f'<option value="{pk}">{pk}</option>' for pk in pk_vals) +
+                 '</select>' if action == 'remove' else ''}
+
+                {'<button type="submit" class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-700 mt-4">Submit</button>' if action else ''}
+            </form>
+
+            <!-- Display Result Messages -->
             {'<p class="mt-4 text-lg font-medium text-green-600">' + message + '</p>' if message else ''}
-            <h2 class="mt-6 text-xl font-bold text-gray-700">Initial Records:</h2>
-            <pre class="bg-gray-200 p-4 rounded">{initial_records}</pre>
-            <h2 class="mt-6 text-xl font-bold text-gray-700">Updated Records:</h2>
-            <pre class="bg-gray-200 p-4 rounded">{updated_records}</pre>
+
+            <!-- Initial and Updated Records for Modify -->
+            {'<h2 class="mt-6 text-xl font-bold text-gray-700">Initial Record:</h2>' +
+             f'<pre class="bg-gray-200 p-4 rounded">{initial_record}</pre>'
+             if action == 'modify' and initial_record else ''}
+
+            {'<h2 class="mt-6 text-xl font-bold text-gray-700">Updated Record:</h2>' +
+             f'<pre class="bg-gray-200 p-4 rounded">{updated_record}</pre>'
+             if action == 'modify' and updated_record else ''}
         </div>
     </body>
     </html>
     '''
+
+# initial and updated record logic not working, need to either:
+# a) make it so that you can't edit a PK field
+# b) make it so that if the PK field is edited, the updated PK is displayed in the updated record
 
 @app.route('/graph', methods=['GET', 'POST'])
 def graph():
@@ -255,13 +318,13 @@ def graph():
         plt.title(f'{team_name} Wins Over the Years')
 
         # Convert graph to a base64 string for embedding in HTML
-        img = io.BytesIO()
-        plt.savefig(img, format='png')
-        img.seek(0)
-        plt.close()
-        graph_url = base64.b64encode(img.getvalue()).decode('utf8')
+        img = io.BytesIO() # Create a BytesIO object to store the image
+        plt.savefig(img, format='png') # Save the image to the BytesIO object
+        img.seek(0) # Move the cursor to the start of the BytesIO object
+        plt.close() # Close the plot to free up memory
+        graph_url = base64.b64encode(img.getvalue()).decode('utf8') # Encode the image as a base64 string
 
-        graph_image = f'<img src="data:image/png;base64,{graph_url}" alt="Graph">'
+        graph_image = f'<img src="data:image/png;base64,{graph_url}" alt="Graph">' # Embed the graph in the HTML
     else:
         graph_image = '<p class="text-red-500">Please select a team to view the graph.</p>'
 
