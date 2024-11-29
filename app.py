@@ -316,15 +316,15 @@ def graph():
     if team_name:
         wins = get_team_wins(team_name)
         df = pd.DataFrame(wins, columns=['Year', 'Wins'])
-        print(df)
 
         # Generate the graph
         plt.switch_backend('Agg')
-        plt.figure(figsize=(10, 5))
-        plt.plot(df['Year'], df['Wins'], marker='o')
+        plt.figure(figsize=(20, 8))
+        plt.bar(df['Year'], df['Wins'], color='blue')
         plt.xlabel('Year')
         plt.ylabel('Wins')
         plt.title(f'{team_name} Wins Over the Years')
+        plt.xticks(rotation=60)
 
         # Convert graph to a base64 string for embedding in HTML
         img = io.BytesIO() # Create a BytesIO object to store the image
