@@ -197,7 +197,12 @@ def edit_data():
             values.append(record_id)
 
             # Execute the update
-            cursor.execute(f"UPDATE {selected_table} SET {updates} WHERE id = ?", values)
+            if selected_table == 'game':
+                cursor.execute(f"UPDATE {selected_table} SET {updates} WHERE game_id = ?", values)
+            elif selected_table == 'player':
+                cursor.execute(f"UPDATE {selected_table} SET {updates} WHERE player_id = ?", values)
+            elif selected_table == 'team':
+                cursor.execute(f"UPDATE {selected_table} SET {updates} WHERE id = ?", values)
             # need to fix here as well, not every table has id column, need to somehow figure out which column is primary key and save that column name to insert here
             conn.commit()
 
@@ -269,7 +274,7 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
                  f'<p class="text-gray-700 font-medium mb-2">Select a record to modify:</p><select name="recordIDModify" class="block w-full p-2 border rounded mb-4">' +
                  ''.join(f'<option value="{pk}">{pk}</option>' for pk in pk_vals) +
                  '</select>' +
-                 ''.join(f'<label for="modify_{col}" class="block text-gray-700 font-medium mb-2">{col}:</label><input type="text" name="modify_{col}" class="block w-full p-2 border rounded mb-4">' for col in columns)
+                 ''.join(f'<label for="modify_{columns[i]}" class="block text-gray-700 font-medium mb-2">{columns[i]}:</label><input type="text" name="modify_{columns[i]}" class="block w-full p-2 border rounded mb-4">' for i in range(1, len(columns)))
                  if action == 'modify' else ''}
 
                 {'<h2 class="text-lg font-bold text-gray-700 mb-4">Remove Record</h2>' +
