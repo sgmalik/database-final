@@ -3,12 +3,15 @@
 https://www.kaggle.com/datasets/wyattowalsh/basketball
 
 # TODO
-- add funcitonality to allow user to add, modify, and delete data from all tables
+- ~~add funcitonality to allow user to add, modify, and delete data from all tables~~
 - ~~add functionality to allow user to query min, max, mean, median, standard deviation mean of a given column~~
 - add two queries using joins 
 - add visuals
 
-
+- not needed but for modify, show initial record and updated record
+- add summary statistic graphs (most wins, most points, most points per game on main page)
+- add second graph to graph page 
+- add another page specifically for join plots??
 
 
 
