@@ -229,7 +229,10 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
         columns = [column[1] for column in cursor.fetchall()]
 
         # Fetch primary key values
-        pk_column = columns[0]  # Assuming the first column is the primary key
+        if selected_table == 'game':
+            pk_column = columns[4] # game_id
+        else:
+            pk_column = columns[0] # first col is pk for player and team
         if pk_column:
             cursor.execute(f"SELECT {pk_column} FROM {selected_table}")
             pk_vals = [val[0] for val in cursor.fetchall()]
@@ -313,6 +316,7 @@ def graph():
     if team_name:
         wins = get_team_wins(team_name)
         df = pd.DataFrame(wins, columns=['Year', 'Wins'])
+        print(df)
 
         # Generate the graph
         plt.switch_backend('Agg')
