@@ -312,21 +312,20 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
 def graph():
     teams = get_teams()
     team_name = request.form.get('team') if request.method == 'POST' else None
-    players = get_players()
-    player_name = request.form.get('player') if request.method == 'POST' else None
 
     if team_name:
+        # Generating the wins graph
         wins = get_team_wins(team_name)
-        df = pd.DataFrame(wins, columns=['Year', 'Wins'])
+        wins_df = pd.DataFrame(wins, columns=['Year', 'Wins'])
 
-        # Generate the graph
         plt.switch_backend('Agg')
         plt.figure(figsize=(20, 8))
-        plt.bar(df['Year'], df['Wins'], color='blue')
+        plt.plot(wins_df['Year'], wins_df['Wins'], color='blue', linewidth=3)
         plt.xlabel('Year')
         plt.ylabel('Wins')
         plt.title(f'{team_name} Wins Over the Years')
         plt.xticks(rotation=60)
+        plt.tight_layout()
 
         # Convert graph to a base64 string for embedding in HTML
         img = io.BytesIO() # Create a BytesIO object to store the image
@@ -334,10 +333,35 @@ def graph():
         img.seek(0) # Move the cursor to the start of the BytesIO object
         plt.close() # Close the plot to free up memory
         graph_url = base64.b64encode(img.getvalue()).decode('utf8') # Encode the image as a base64 string
+        wins_image = f'<img src="data:image/png;base64,{graph_url}" alt="Graph">' # Embed the graph in the HTML
 
-        graph_image = f'<img src="data:image/png;base64,{graph_url}" alt="Graph">' # Embed the graph in the HTML
+        # Generating the draft info graph
+        draft_info = get_player_draft_info(team_name)
+        draft_df = pd.DataFrame(draft_info, columns=['Draft Year', 'Number of Players'])
+        draft_df = draft_df[draft_df['Draft Year'] != 'Undrafted']
+
+        plt.switch_backend('Agg')
+        plt.figure(figsize=(20, 8))
+        plt.bar(draft_df['Draft Year'], draft_df['Number of Players'], color='red')
+        plt.xlabel('Draft Year')
+        plt.ylabel('Number of Players')
+        plt.title(f'{team_name} Players Drafter Over the Years')
+        plt.xticks(rotation=60)
+        plt.tight_layout()
+
+        # Convert graph to a base64 string for embedding in HTML
+        img = io.BytesIO()
+        plt.savefig(img, format='png')
+        img.seek(0)
+        plt.close()
+        graph_url = base64.b64encode(img.getvalue()).decode('utf8')
+        draft_image = f'<img src="data:image/png;base64,{graph_url}" alt="Graph">'
+
+
     else:
-        graph_image = '<p class="text-red-500">Please select a team to view the graph.</p>'
+        wins_image = '<p class="text-red-500">Please select a team to view the wins graph.</p>'
+        draft_image = '<p class="text-red-500">Please select a team to view the draft graph.</p>'
+
 
 
     return f'''
@@ -358,7 +382,10 @@ def graph():
                 <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">View Team Graph</button>
             </form>
             <div class="mt-6">
-                {graph_image}
+                {wins_image}
+            </div>
+            <div class="mt-6">
+                {draft_image}
             </div>
         </div>
     </body>
@@ -410,6 +437,22 @@ def get_player_weights(first_name, last_name):
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute("SELECT year, weight FROM player WHERE first_name=? AND last_name=?", (first_name, last_name))
+    result = cursor.fetchall()
+    conn.close()
+    return result
+
+def get_player_draft_info(team_name):
+    conn = connect_db()
+    cursor = conn.cursor()
+    query = '''
+    SELECT p.draft_year, COUNT(*) as num_players
+    FROM team t
+    JOIN player p on t.id = p.team_id
+    WHERE t.full_name = ?
+    GROUP BY t.full_name, p.draft_year
+    ORDER BY p.draft_year
+    '''
+    cursor.execute(query, (team_name,))
     result = cursor.fetchall()
     conn.close()
     return result
