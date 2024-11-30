@@ -312,6 +312,8 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
 def graph():
     teams = get_teams()
     team_name = request.form.get('team') if request.method == 'POST' else None
+    players = get_players()
+    player_name = request.form.get('player') if request.method == 'POST' else None
 
     if team_name:
         wins = get_team_wins(team_name)
@@ -337,6 +339,7 @@ def graph():
     else:
         graph_image = '<p class="text-red-500">Please select a team to view the graph.</p>'
 
+
     return f'''
     <!DOCTYPE html>
     <html lang="en">
@@ -352,7 +355,7 @@ def graph():
                 <select name="team" id="team" class="block w-full p-2 border rounded mb-4">
                     {" ".join(f'<option value="{team}" {"selected" if team == team_name else ""}>{team}</option>' for team in teams)}
                 </select>
-                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">View Graph</button>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">View Team Graph</button>
             </form>
             <div class="mt-6">
                 {graph_image}
@@ -370,6 +373,14 @@ def get_teams():
     teams = cursor.fetchall()
     conn.close()
     return [team[0] for team in teams]
+
+def get_players():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT first_name, last_name FROM player")
+    players = cursor.fetchall()
+    conn.close()
+    return [player[0] + ' ' + player[1] for player in players]
 
 def get_team_wins(team_name):
     conn = connect_db()
@@ -391,6 +402,14 @@ def get_team_wins(team_name):
     ORDER BY year
     '''
     cursor.execute(query, (team_name, team_name))
+    result = cursor.fetchall()
+    conn.close()
+    return result
+
+def get_player_weights(first_name, last_name):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT year, weight FROM player WHERE first_name=? AND last_name=?", (first_name, last_name))
     result = cursor.fetchall()
     conn.close()
     return result
