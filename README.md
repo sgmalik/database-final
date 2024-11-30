@@ -3,28 +3,11 @@
 https://www.kaggle.com/datasets/wyattowalsh/basketball
 
 # TODO
-- ~~add funcitonality to allow user to add, modify, and delete data from all tables~~
-- ~~add functionality to allow user to query min, max, mean, median, standard deviation mean of a given column~~
-- add two queries using joins 
-- add visuals
-
-- not needed but for modify, show initial record and updated record
-- add summary statistic graphs (most wins, most points, most points per game on main page)
-- add second graph to graph page 
-- add another page specifically for join plots??
-
-
-
-
-# ideas for queries
-- which team has the most wins?
-- which player has the most points?
-- which team averages the most points per game?
-
-# visuals
-- bar chart of team wins
-- bar chart of player points
-
-# using joins
-- join team and game on team_id to show how many wins each team had in a given season
-- join player and game on player_id to show how many points each player scored in a given season
+- update the first graph to use a join statement between team and game so that we have two joins
+- fix / finish the update / add / remove functionality
+- clean database, drop useless columns
+- make sure that correct data types are being used in database
+- write up ER diagram and relational model
+- add / remove comments, clean up code
+ONCE ALL FINSIHED:
+- make final presentation / walkthrough video
