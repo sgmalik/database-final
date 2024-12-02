@@ -92,8 +92,9 @@ def query():
             median = df[selected_column].median()
             result = f"The median of {selected_column} is {median}"
         elif selected_stat == 'stddev':
-            query = f"SELECT STDDEV({selected_column}) FROM {selected_table}"
-
+            df = pd.read_sql_query(f"SELECT {selected_column} FROM {selected_table}", conn)
+            stddev = df[selected_column].std()
+            result = f"The standard deviation of {selected_column} is {stddev}"
         # If there is a query, (excluding median) execute it and print the result to the page
         if query:
             cursor.execute(query)
