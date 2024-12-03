@@ -214,6 +214,23 @@ def edit_data():
             # updated_record = cursor.fetchone()
 
             result_message = f"Record {record_id} modified in {selected_table}."
+
+        # Add method
+        if action == 'add' and request.method == 'POST':
+            # Gather values from the form for each column
+            values = [request.form.get(f'add_{col}') for col in columns]
+            placeholders = ', '.join(['?'] * len(columns))
+
+            try:
+                # Insert new row into the table
+                cursor.execute(f"INSERT INTO {selected_table} ({', '.join(columns)}) VALUES ({placeholders})", values)
+                conn.commit()
+                result_message = f"New row successfully added to {selected_table}."
+            except sqlite3.Error as e:
+                result_message = f"Error adding row: {e}"
+            conn.commit()
+
+
         conn.close()
 
     return render_edit_form(selected_table, action, result_message)
@@ -306,6 +323,8 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
     </body>
     </html>
     '''
+
+
 
 # initial and updated record logic not working, need to either:
 # a) make it so that you can't edit a PK field
