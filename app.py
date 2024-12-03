@@ -465,21 +465,129 @@ def get_player_draft_info(team_name):
     conn.close()
     return result
 
-@app.route('/where_queries')
+
+@app.route('/where_queries', methods=['GET', 'POST'])
 def where_queries():
+    # Fetch current selections from the form
+    selected_table = request.form.get('table')
+    selected_column = request.form.get('column')
+    selected_value = request.form.get('value')
+
+    # Initialize dropdown options
+    columns, distinct_values, rows = [], [], []
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    if selected_table:
+        # Fetch columns for the selected table
+        cursor.execute(f"PRAGMA table_info({selected_table})")
+        columns = [column[1] for column in cursor.fetchall()]
+
+        # Reset column and value if they are no longer valid for the selected table
+        if selected_column not in columns:
+            selected_column = None
+            selected_value = None
+
+    if selected_table and selected_column:
+        # Exclude null values when fetching distinct column values
+        cursor.execute(f"SELECT DISTINCT {selected_column} FROM {selected_table} WHERE {selected_column} IS NOT NULL")
+        distinct_values = [row[0] for row in cursor.fetchall()]
+
+        # Ensure numerical distinct values are properly handled
+        distinct_values = [str(val) for val in distinct_values]  # Convert all to strings for dropdown compatibility
+
+        # Reset the value if it is no longer valid
+        if selected_value not in distinct_values:
+            selected_value = None
+
+    if selected_table and selected_column and selected_value:
+        # Convert `selected_value` to the appropriate type
+        try:
+            if selected_value.isdigit():
+                selected_value = int(selected_value)
+            else:
+                selected_value = float(selected_value)
+        except ValueError:
+            pass  # Keep as string if conversion fails
+
+        # Fetch rows where the selected column has the selected value
+        cursor.execute(f"SELECT * FROM {selected_table} WHERE {selected_column} = ? AND {selected_column} IS NOT NULL", (selected_value,))
+        rows = cursor.fetchall()
+
+    conn.close()
+
+    # Render the form with the updated dropdown options
+    return render_where_queries_form(selected_table, selected_column, selected_value, columns, distinct_values, rows)
+
+
+       
+def render_where_queries_form(selected_table, selected_column, selected_value, columns, distinct_values, rows):
 
     return f'''
     <!DOCTYPE html>
     <html lang="en">
     <head>
-        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.tailwindcss.com"></script> 
     </head>
     <body class="bg-gray-100">
-        {navbar()}
-        
+        {navbar()} 
+        <div class="container mx-auto py-10">
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">Where Queries</h1>
+            
+
+            <form method="POST" class="bg-white p-6 rounded-lg shadow-md">
+                
+                <!-- Dropdown for selecting a table -->
+                <label for="table" class="block text-gray-700 font-medium mb-2">Select Table:</label>
+                <select name="table" id="table" onchange="this.form.submit()" class="block w-full p-2 border rounded mb-4">
+                    <option value="">Select a table...</option>
+                    <option value="game" {"selected" if selected_table == "game" else ""}>Game</option>
+                    <option value="player" {"selected" if selected_table == "player" else ""}>Player</option>
+                    <option value="team" {"selected" if selected_table == "team" else ""}>Team</option>
+                </select>
+
+                <!-- Dropdown for selecting a column (only displayed if a table is selected) -->
+                {f'''
+                <label for="column" class="block text-gray-700 font-medium mb-2">Select Column:</label>
+                <select name="column" id="column" onchange="this.form.submit()" class="block w-full p-2 border rounded mb-4">
+                    <option value="">Select a column...</option>
+                    {" ".join(f'<option value="{col}" {"selected" if col == selected_column else ""}>{col}</option>' for col in columns)}
+                </select>
+                ''' if selected_table else ''}
+
+                <!-- Dropdown for selecting a value (only displayed if a column is selected) -->
+                {f'''
+                <label for="value" class="block text-gray-700 font-medium mb-2">Select Value:</label>
+                <select name="value" id="value" onchange="this.form.submit()" class="block w-full p-2 border rounded mb-4">
+                    <option value="">Select a value...</option>
+                    {" ".join(f'<option value="{val}" {"selected" if val == selected_value else ""}>{val}</option>' for val in distinct_values)}
+                </select>
+                ''' if selected_column else ''}
+            </form>
+
+            <!-- Display the rows -->
+            {f'''
+            <div class="mt-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Rows with {selected_column} = {selected_value}</h2>
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            {" ".join(f'<th class="py-2">{col}</th>' for col in columns)} <!-- Table headers -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {" ".join(f'<tr>{" ".join(f"<td class=\'border px-4 py-2\'>{cell}</td>" for cell in row)}</tr>' for row in rows)} <!-- Table rows -->
+                    </tbody>
+                </table>
+            </div>
+            ''' if rows else ''}
+        </div>
     </body>
     </html>
     '''
+
+
 
 
 if __name__ == '__main__':
