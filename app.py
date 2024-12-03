@@ -176,16 +176,23 @@ def edit_data():
     result_message = None
     # initial_record = None  # Single record for Modify
     # updated_record = None
-    columns = []
 
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    columns = []
+    pk_column = None
+    pk_vals = []
+    
     if selected_table:
         conn = connect_db()
         cursor = conn.cursor()
 
-        # Fetch column names for the selected table
         cursor.execute(f"PRAGMA table_info({selected_table})")
-        columns = [column[1] for column in cursor.fetchall()]  # Fetch column names
-
+        table_info = cursor.fetchall()
+        columns = [column[1] for column in table_info]
+        pk_column = next((column[1] for column in table_info if column[5] == 1), None)
+    
         if action == 'modify' and request.method == 'POST':
             # Fetch the primary key value
             record_id = request.form.get('recordIDModify')
@@ -230,10 +237,22 @@ def edit_data():
                 result_message = f"Error adding row: {e}"
             conn.commit()
 
+        # Remove method
+        if action == 'remove' and request.method == 'POST':
 
+            row_id = request.form.get('recordID')
+            if pk_column and row_id:
+                try:
+                    # Execute DELETE query
+                    cursor.execute(f"DELETE FROM {selected_table} WHERE {pk_column} = ?", (row_id,))
+                    conn.commit()
+                    result_message = f"Record with {pk_column} = {row_id} successfully removed from {selected_table}."
+                except sqlite3.Error as e:
+                    result_message = f"Error removing record: {e}"
         conn.close()
 
     return render_edit_form(selected_table, action, result_message)
+
 
 def render_edit_form(selected_table=None, action=None, message=None, initial_record=None, updated_record=None):
     columns = []
@@ -510,7 +529,12 @@ def where_queries():
 
     if selected_table and selected_column:
         # Exclude null values when fetching distinct column values
-        cursor.execute(f"SELECT DISTINCT {selected_column} FROM {selected_table} WHERE {selected_column} IS NOT NULL")
+        cursor.execute(f"""
+        SELECT DISTINCT TRIM({selected_column}) AS normalized_value
+        FROM {selected_table}
+        WHERE {selected_column} IS NOT NULL
+        ORDER BY normalized_value
+        """)
         distinct_values = [row[0] for row in cursor.fetchall()]
 
         # Ensure numerical distinct values are properly handled
