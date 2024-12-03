@@ -416,23 +416,51 @@ def get_team_wins(team_name):
     query = '''
     SELECT year, SUM(wins) as total_wins
     FROM (
-        SELECT strftime('%Y', game_date) as year, COUNT(*) as wins
-        FROM game
-        WHERE team_name_home = ? AND wl_home = 'W'
+        SELECT strftime('%Y', g.game_date) as year, COUNT(*) as wins
+        FROM team t
+        JOIN game g ON t.id = g.team_id_home
+        WHERE g.team_name_home = ? AND g.wl_home = 'W'
         GROUP BY year
+
         UNION ALL
-        SELECT strftime('%Y', game_date) as year, COUNT(*) as wins
-        FROM game
-        WHERE team_name_away = ? AND wl_home = 'L'
+
+        SELECT strftime('%Y', g.game_date) as year, COUNT(*) as wins
+        FROM team t
+        JOIN game g ON t.id = g.team_id_away
+        WHERE g.team_name_away = ? AND g.wl_home = 'L'
         GROUP BY year
     )
     GROUP BY year
-    ORDER BY year
+    ORDER BY year;
     '''
     cursor.execute(query, (team_name, team_name))
     result = cursor.fetchall()
     conn.close()
     return result
+
+# def get_team_wins(team_name):
+#     conn = connect_db()
+#     cursor = conn.cursor()
+#     query = '''
+#     SELECT year, SUM(wins) as total_wins
+#     FROM (
+#         SELECT strftime('%Y', game_date) as year, COUNT(*) as wins
+#         FROM game
+#         WHERE team_name_home = ? AND wl_home = 'W'
+#         GROUP BY year
+#         UNION ALL
+#         SELECT strftime('%Y', game_date) as year, COUNT(*) as wins
+#         FROM game
+#         WHERE team_name_away = ? AND wl_home = 'L'
+#         GROUP BY year
+#     )
+#     GROUP BY year
+#     ORDER BY year
+#     '''
+#     cursor.execute(query, (team_name, team_name))
+#     result = cursor.fetchall()
+#     conn.close()
+#     return result
 
 def get_player_weights(first_name, last_name):
     conn = connect_db()
