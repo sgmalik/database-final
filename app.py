@@ -30,6 +30,7 @@ def navbar():
                 <a href="/query" class="text-white ml-4">Query Page</a>
                 <a href="/edit_data" class="text-white ml-4">Edit Data</a>
                 <a href="/graph" class="text-white ml-4">Graph Page</a>
+                <a href="/where_queries" class="text-white ml-4">Where Queries</a>
             </div>
         </div>
     </nav>
@@ -51,6 +52,7 @@ def home():
                 <a href="/query" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700">Query Page</a>
                 <a href="/edit_data" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700">Edit Data Page</a>
                 <a href="/graph" class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-700">Graph Page</a>
+                <a href="/where_queries" class="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-700">Where Queries</a>
             </div>
         </div>
     </body>
@@ -438,29 +440,6 @@ def get_team_wins(team_name):
     conn.close()
     return result
 
-# def get_team_wins(team_name):
-#     conn = connect_db()
-#     cursor = conn.cursor()
-#     query = '''
-#     SELECT year, SUM(wins) as total_wins
-#     FROM (
-#         SELECT strftime('%Y', game_date) as year, COUNT(*) as wins
-#         FROM game
-#         WHERE team_name_home = ? AND wl_home = 'W'
-#         GROUP BY year
-#         UNION ALL
-#         SELECT strftime('%Y', game_date) as year, COUNT(*) as wins
-#         FROM game
-#         WHERE team_name_away = ? AND wl_home = 'L'
-#         GROUP BY year
-#     )
-#     GROUP BY year
-#     ORDER BY year
-#     '''
-#     cursor.execute(query, (team_name, team_name))
-#     result = cursor.fetchall()
-#     conn.close()
-#     return result
 
 def get_player_weights(first_name, last_name):
     conn = connect_db()
@@ -485,6 +464,22 @@ def get_player_draft_info(team_name):
     result = cursor.fetchall()
     conn.close()
     return result
+
+@app.route('/where_queries')
+def where_queries():
+
+    return f'''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+        {navbar()}
+        
+    </body>
+    </html>
+    '''
 
 
 if __name__ == '__main__':
