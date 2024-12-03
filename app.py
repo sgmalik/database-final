@@ -192,35 +192,44 @@ def edit_data():
         table_info = cursor.fetchall()
         columns = [column[1] for column in table_info]
         pk_column = next((column[1] for column in table_info if column[5] == 1), None)
+        column_types = {col[1]: col[2].upper() for col in table_info}
     
         if action == 'modify' and request.method == 'POST':
             # Fetch the primary key value
             record_id = request.form.get('recordIDModify')
+        
+            new_values = []
+            for col in columns:
+                value = request.form.get(f'modify_{col}')
+                if value is None:
+                    new_values.append(None)  # Handle NULL values
+                elif column_types[col] == 'INTEGER':
+                    new_values.append(int(value))  # Cast to INTEGER
+                elif column_types[col] == 'REAL':
+                    new_values.append(float(value))  # Cast to REAL
+                else:
+                    new_values.append(value)  # Default to TEXT
 
-            # # Fetch initial state of the record
-            # cursor.execute(f"SELECT * FROM {selected_table} WHERE id = ?", (record_id,))
-            # initial_record = cursor.fetchone()
+            placeholders = ', '.join([f"{col} = ?" for col in columns])  # e.g., "col1 = ?, col2 = ?"
+            print(new_values)
+            new_values = new_values[1:]
 
-            # Prepare SQL for updating the record
-            updates = ', '.join([f"{col} = ?" for col in columns])
-            values = [request.form.get(f'modify_{col}') for col in columns]
-            values.append(record_id)
+            # Add the primary key value to the end of the new_values list
+            values_for_query = [record_id] + new_values + [record_id]
 
-            # Execute the update
-            if selected_table == 'game':
-                cursor.execute(f"UPDATE {selected_table} SET {updates} WHERE game_id = ?", values)
-            elif selected_table == 'player':
-                cursor.execute(f"UPDATE {selected_table} SET {updates} WHERE player_id = ?", values)
-            elif selected_table == 'team':
-                cursor.execute(f"UPDATE {selected_table} SET {updates} WHERE id = ?", values)
-            # need to fix here as well, not every table has id column, need to somehow figure out which column is primary key and save that column name to insert here
-            conn.commit()
 
-            # # Fetch updated state of the record
-            # cursor.execute(f"SELECT * FROM {selected_table} WHERE id = ?", (record_id,))
-            # updated_record = cursor.fetchone()
+            print("Values for query:", values_for_query)
+            print("Column types:", column_types)
 
-            result_message = f"Record {record_id} modified in {selected_table}."
+            # Execute the UPDATE query
+            try:
+                cursor.execute(f"UPDATE {selected_table} SET {placeholders} WHERE {columns[0]} = ?", values_for_query)
+                conn.commit()
+                result_message = f"Record with {columns[0]} = {record_id} successfully updated in {selected_table}."
+            except sqlite3.Error as e:
+                result_message = f"Error updating record: {e}"
+            
+            conn.close()
 
         # Add method
         if action == 'add' and request.method == 'POST':
