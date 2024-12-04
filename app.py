@@ -177,9 +177,6 @@ def edit_data():
     # initial_record = None  # Single record for Modify
     # updated_record = None
 
-    conn = connect_db()
-    cursor = conn.cursor()
-
     columns = []
     pk_column = None
     pk_vals = []
@@ -194,6 +191,7 @@ def edit_data():
         pk_column = next((column[1] for column in table_info if column[5] == 1), None)
         column_types = {col[1]: col[2].upper() for col in table_info}
     
+        # Modify method
         if action == 'modify' and request.method == 'POST':
             # Fetch the primary key value
             record_id = request.form.get('recordIDModify') or request.args.get('recordID')
@@ -206,6 +204,7 @@ def edit_data():
             else: 
                 initial_record = None
         
+            # Casting strings to their respected types
             new_values = []
             for col in columns:
                 value = request.form.get(f'modify_{col}')
@@ -282,17 +281,16 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
 
         # Fetch column names
         cursor.execute(f"PRAGMA table_info({selected_table})")
-        columns = [column[1] for column in cursor.fetchall()]
-
-        # Fetch primary key values
-        if selected_table == 'game':
-            pk_column = columns[4] # game_id
-        else:
-            pk_column = columns[0] # first col is pk for player and team
+        table_info = cursor.fetchall()
+        columns = [column[1] for column in table_info]
+        pk_column = next((column[1] for column in table_info if column[5] == 1), None)
+        
         if pk_column:
             cursor.execute(f"SELECT {pk_column} FROM {selected_table}")
             pk_vals = [val[0] for val in cursor.fetchall()]
         conn.close()
+
+        
 
     # Render form
     return f'''
