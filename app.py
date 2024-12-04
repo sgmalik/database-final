@@ -194,7 +194,7 @@ def edit_data():
         # Modify method
         if action == 'modify' and request.method == 'POST':
             # Fetch the primary key value
-            record_id = request.form.get('recordIDModify') or request.args.get('recordID')
+            record_id = request.form.get('recordIDModify')
 
             # Fetch the initial record values
             if record_id:
@@ -284,11 +284,13 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
         table_info = cursor.fetchall()
         columns = [column[1] for column in table_info]
         pk_column = next((column[1] for column in table_info if column[5] == 1), None)
-        
+
         if pk_column:
             cursor.execute(f"SELECT {pk_column} FROM {selected_table}")
             pk_vals = [val[0] for val in cursor.fetchall()]
         conn.close()
+
+        print(pk_vals)
 
         
 
@@ -328,11 +330,14 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
                  if action == 'add' else ''}
 
                 {'<h2 class="text-lg font-bold text-gray-700 mb-4">Modify Record</h2>' +
-                 f'<p class="text-gray-700 font-medium mb-2">Select a record to modify:</p><select name="recordIDModify" class="block w-full p-2 border rounded mb-4" onchange="this.form.submit()>' +
-                 ''.join(f'<option value="{pk}" {"selected" if str(pk) == str((initial_record[0]) if initial_record else None) else ""}>{pk}</option>' for pk in pk_vals) +
-                 '</select>' +
-                 ''.join(f'<label for="modify_{columns[i]}" class="block text-gray-700 font-medium mb-2">{columns[i]}:</label><input type="text" name="modify_{columns[i]} value="{initial_record[i] if initial_record else ""} class="block w-full p-2 border rounded mb-4">' for i, col in enumerate(columns))
-                 if action == 'modify' else ''}
+                f'<p class="text-gray-700 font-medium mb-2">Select a record to modify:</p>' +
+                f'<select name="recordIDModify" class="block w-full p-2 border rounded mb-4" onchange="this.form.submit()">' +
+                ''.join(f'<option value="{str(pk)}" {"selected" if str(pk) == request.args.get("recordIDModify") else ""}>{pk}</option>' for pk in pk_vals) +
+                '</select>' +
+                ''.join(f'<label for="modify_{columns[i]}" class="block text-gray-700 font-medium mb-2">{columns[i]}:</label>' +
+                        f'<input type="text" name="modify_{columns[i]}" class="block w-full p-2 border rounded mb-4">' for i in range(1, len(columns)))
+                if action == 'modify' else ''}
+
 
                 {'<h2 class="text-lg font-bold text-gray-700 mb-4">Remove Record</h2>' +
                  f'<p class="text-gray-700 font-medium mb-2">Select a record to remove:</p><select name="recordID" class="block w-full p-2 border rounded mb-4">' +
