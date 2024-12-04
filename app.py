@@ -288,11 +288,7 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
         if pk_column:
             cursor.execute(f"SELECT {pk_column} FROM {selected_table}")
             pk_vals = [val[0] for val in cursor.fetchall()]
-        conn.close()
-
-        print(pk_vals)
-
-        
+        conn.close()      
 
     # Render form
     return f'''
@@ -332,8 +328,7 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
                 {'<h2 class="text-lg font-bold text-gray-700 mb-4">Modify Record</h2>' +
                 f'<p class="text-gray-700 font-medium mb-2">Select a record to modify:</p>' +
                 f'<select name="recordIDModify" class="block w-full p-2 border rounded mb-4" onchange="this.form.submit()">' +
-                ''.join(f'<option value="{str(pk)}" {"selected" if str(pk) == request.args.get("recordIDModify") else ""}>{pk}</option>' for pk in pk_vals) +
-                '</select>' +
+                ''.join(f'<option value="{str(pk)}">{pk}</option>' for pk in pk_vals) +'</select>' +
                 ''.join(f'<label for="modify_{columns[i]}" class="block text-gray-700 font-medium mb-2">{columns[i]}:</label>' +
                         f'<input type="text" name="modify_{columns[i]}" class="block w-full p-2 border rounded mb-4">' for i in range(1, len(columns)))
                 if action == 'modify' else ''}
