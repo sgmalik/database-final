@@ -196,7 +196,15 @@ def edit_data():
     
         if action == 'modify' and request.method == 'POST':
             # Fetch the primary key value
-            record_id = request.form.get('recordIDModify')
+            record_id = request.form.get('recordIDModify') or request.args.get('recordID')
+
+            # Fetch the initial record values
+            if record_id:
+                cursor.execute(f"SELECT * FROM {selected_table} WHERE {columns[0]} = ?", (record_id,))
+                initial_record = cursor.fetchone()
+                initial_record = str(initial_record)
+            else: 
+                initial_record = None
         
             new_values = []
             for col in columns:
@@ -322,10 +330,10 @@ def render_edit_form(selected_table=None, action=None, message=None, initial_rec
                  if action == 'add' else ''}
 
                 {'<h2 class="text-lg font-bold text-gray-700 mb-4">Modify Record</h2>' +
-                 f'<p class="text-gray-700 font-medium mb-2">Select a record to modify:</p><select name="recordIDModify" class="block w-full p-2 border rounded mb-4">' +
-                 ''.join(f'<option value="{pk}">{pk}</option>' for pk in pk_vals) +
+                 f'<p class="text-gray-700 font-medium mb-2">Select a record to modify:</p><select name="recordIDModify" class="block w-full p-2 border rounded mb-4" onchange="this.form.submit()>' +
+                 ''.join(f'<option value="{pk}" {"selected" if str(pk) == str((initial_record[0]) if initial_record else None) else ""}>{pk}</option>' for pk in pk_vals) +
                  '</select>' +
-                 ''.join(f'<label for="modify_{columns[i]}" class="block text-gray-700 font-medium mb-2">{columns[i]}:</label><input type="text" name="modify_{columns[i]}" class="block w-full p-2 border rounded mb-4">' for i in range(1, len(columns)))
+                 ''.join(f'<label for="modify_{columns[i]}" class="block text-gray-700 font-medium mb-2">{columns[i]}:</label><input type="text" name="modify_{columns[i]} value="{initial_record[i] if initial_record else ""} class="block w-full p-2 border rounded mb-4">' for i, col in enumerate(columns))
                  if action == 'modify' else ''}
 
                 {'<h2 class="text-lg font-bold text-gray-700 mb-4">Remove Record</h2>' +
@@ -622,7 +630,7 @@ def render_where_queries_form(selected_table, selected_column, selected_value, c
             {f'''
             <div class="mt-6">
                 <h2 class="text-xl font-bold text-gray-800 mb-4">Rows with {selected_column} = {selected_value}</h2>
-                <table class="min-w-full bg-white">
+                <table class="table-auto w-full bg-white border-collapse border border-gray-300">
                     <thead>
                         <tr>
                             {" ".join(f'<th class="py-2">{col}</th>' for col in columns)} <!-- Table headers -->
