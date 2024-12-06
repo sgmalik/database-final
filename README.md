@@ -1,12 +1,19 @@
 # database-final
 
-https://www.kaggle.com/datasets/wyattowalsh/basketball
 
-# TODO
-- fix / finish the update / add / remove functionality
-- clean database, drop useless columns
-- make sure that correct data types are being used in database
-- write up ER diagram and relational model
-- add / remove comments, clean up code
-ONCE ALL FINSIHED:
-- make final presentation / walkthrough video
+Link to our video:  
+https://uvmoffice-my.sharepoint.com/:v:/g/personal/rbumpas_uvm_edu/EU7EXdGVzm9IkDllQMT_8aUBoiZsV71wOWrJjtlf4tWOaA?e=6T23kx&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D
+
+
+Where to find our dataset:  
+https://www.kaggle.com/datasets/wyattowalsh/basketball  
+
+
+
+
+
+
+
+
+
+
