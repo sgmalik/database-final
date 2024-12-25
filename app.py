@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify, render_template, make_response
 import base64
 import io
+import os
 
 
 
@@ -14,12 +15,12 @@ import io
 # Initialize Flask app
 app = Flask(__name__)
 # Define database
-DATABASE = 'final_project.db'
+DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "final_project.db")
 
-# Helper function to connect to the database
 def connect_db():
     conn = sqlite3.connect(DATABASE)
     return conn
+
 
 def navbar():
     return '''
