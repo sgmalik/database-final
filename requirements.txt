@@ -1,6 +1,6 @@
 flask
 pandas
-sqllite3
+sqlite3
 matplotlib
 base64
 io
