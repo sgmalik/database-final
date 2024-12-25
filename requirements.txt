@@ -1,6 +1,4 @@
 flask
 pandas
-sqlite3
 matplotlib
 base64
-io
